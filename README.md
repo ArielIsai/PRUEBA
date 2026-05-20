@@ -1,5 +1,45 @@
-package alumnos;
+CREATE DATABASE IF NOT EXISTS sistema_login;
+USE sistema_login;
 
+-- Tabla Padre: Usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(50) NOT NULL UNIQUE,
+    clave VARCHAR(255) NOT NULL
+);
+
+-- Tabla Hija: Historial de Ingresos (Para cumplir el Criterio 2)
+CREATE TABLE ingresos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    fecha_ingreso DATETIME NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Insertar un usuario de prueba (Clave: admin123)
+INSERT INTO usuarios (usuario, clave) VALUES ('admin', 'admin123'); package alumnos;
+
+package config;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class Conexion {
+    private static final String URL = "jdbc:mysql://localhost:3306/sistema_login";
+    private static final String USER = "root";
+    private static final String PASSWORD = ""; // Cambia si usas contraseña en XAMPP
+
+    public static Connection getConexion() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (ClassNotFoundException | SQLException e) {
+            System.out.println("Error de conexión: " + e.getMessage());
+            return null;
+        }
+    }
+}
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
