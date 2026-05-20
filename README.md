@@ -40,6 +40,107 @@ public class Conexion {
         }
     }
 }
+
+package model;
+
+public class Usuario {
+    private int id;
+    private String usuario;
+    private String clave;
+
+    public Usuario() {}
+
+    public Usuario(int id, String usuario, String clave) {
+        this.id = id;
+        this.usuario = usuario;
+        this.clave = clave;
+    }
+
+    // Getters y Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getUsuario() { return usuario; }
+    public void setUsuario(String usuario) { this.usuario = usuario; }
+    public String getClave() { return clave; }
+    public void setClave(String clave) { this.clave = clave; }
+} 
+
+package dao;
+
+import config.Conexion;
+import model.Usuario;
+import java.sql.*;
+import java.time.LocalDateTime;
+
+public class UsuarioDAO {
+
+    // Retorna el objeto Usuario si es válido, de lo contrario devuelve null
+    public Usuario validarLogin(String txtUsuario, String txtClave) {
+        String sql = "SELECT * FROM usuarios WHERE usuario = ? AND clave = ?";
+        try (Connection con = Conexion.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, txtUsuario);
+            ps.setString(2, txtClave);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Usuario(rs.getInt("id"), rs.getString("usuario"), rs.getString("clave"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al validar: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Registra el ingreso en la tabla hija
+    public boolean registrarIngreso(int usuarioId) {
+        String sql = "INSERT INTO ingresos (usuario_id, fecha_ingreso) VALUES (?, ?)";
+        try (Connection con = Conexion.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, usuarioId);
+            // Uso de LocalDateTime.now() solicitado en la pizarra
+            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now())); 
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error al registrar ingreso: " + e.getMessage());
+            return false;
+        }
+    }
+}
+
+private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    String txtUser = txtUsuario.getText().trim();
+    String txtPass = new String(txtPassword.getPassword()).trim();
+
+    // Validar que los campos no estén vacíos
+    if (txtUser.isEmpty() || txtPass.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, llene todos los campos.");
+        return;
+    }
+
+    UsuarioDAO dao = new UsuarioDAO();
+    model.Usuario user = dao.validarLogin(txtUser, txtPass);
+
+    if (user != null) {
+        // 1. Mensaje de éxito exacto pedido en el examen
+        JOptionPane.showMessageDialog(this, "Bienvenido al sistema Usuario " + user.getUsuario());
+        
+        // 2. Registrar el ingreso en la base de datos (Criterio 2)
+        dao.registrarIngreso(user.getId());
+        
+        // 3. Permitir el ingreso de otro usuario (Limpiar campos para el siguiente)
+        txtUsuario.setText("");
+        txtPassword.setText("");
+        txtUsuario.requestFocus();
+        
+    } else {
+        // Mensaje de error exacto pedido en el examen
+        JOptionPane.showMessageDialog(this, "Usuario o clave incorrecta");
+    }
+}
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
